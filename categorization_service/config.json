@@ -1,0 +1,4 @@
+{
+    "zero_shot_model": "MoritzLaurer/deberta-v3-large-zeroshot-v2.0",
+    "qa_model": "deepset/roberta-base-squad2"
+}

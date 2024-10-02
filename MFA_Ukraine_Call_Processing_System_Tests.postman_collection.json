@@ -1,0 +1,987 @@
+{
+	"info": {
+		"_postman_id": "ec7f643a-e216-46d1-8fef-3ad51d8ff453",
+		"name": "MFA Ukraine Call Processing System Test",
+		"description": "You can manually test each endpoint or you can \"Run collection\" in context menu of the requests list. But you have to provide a valid audio url before creating a new call. And Default Case for Get Call will be failed until AI process the result (you can test it separately after successful analysing)\n\n### Explanation of Added Test Cases\n\n#### **Categories Endpoint**\n\n1. **Get Categories**\n    \n    - **Get Categories - Default Case**\n        \n        - **Status Code:** 200 OK\n            \n        - **Response Structure:** Array of categories with `id`, `title`, and `points`.\n            \n2. **Create Category**\n    \n    - **Create Category - Default Case**\n        \n        - **Status Code:** 201 Created\n            \n        - **Response Structure:** Contains `id`, `title`, and `points`.\n            \n    - **Create Category - Invalid Request Body**\n        \n        - **Status Code:** 422 Unprocessable Entity\n            \n        - **Error Message:** Indicates invalid fields.\n            \n    - **Create Category - Missing Title**\n        \n        - **Status Code:** 422 Unprocessable Entity\n            \n        - **Error Message:** `title` is required.\n            \n    - **Create Category - Points Not an Array**\n        \n        - **Status Code:** 422 Unprocessable Entity\n            \n        - **Error Message:** `points` must be an array.\n            \n3. **Update Category**\n    \n    - **Update Category - Default Case**\n        \n        - **Status Code:** 200 OK\n            \n        - **Response Structure:** Updated `id`, `title`, and `points`.\n            \n    - **Update Category - Invalid Request Body**\n        \n        - **Status Code:** 422 Unprocessable Entity\n            \n        - **Error Message:** Indicates invalid fields.\n            \n    - **Update Category - Non-existing Category ID**\n        \n        - **Status Code:** 404 Not Found\n            \n        - **Error Message:** Category not found.\n            \n    - **Update Category - Points Not an Array**\n        \n        - **Status Code:** 422 Unprocessable Entity\n            \n        - **Error Message:** `points` must be an array.\n            \n4. **Delete Category**\n    \n    - **Delete Category - Default Case**\n        \n        - **Status Code:** 200 OK\n            \n        - **Response Message:** Confirms deletion.\n            \n    - **Delete Category - Non-existing Category ID**\n        \n        - **Status Code:** 404 Not Found\n            \n        - **Error Message:** Category not found.\n            \n\n#### **Calls Endpoint**\n\n1. **Create Call**\n    \n    - **Create Call - Default Case**\n        \n        - **Status Code:** 200 OK\n            \n        - **Response Structure:** Contains `id`.\n            \n    - **Create Call - Invalid Audio URL**\n        \n        - **Status Code:** 422 Unprocessable Entity\n            \n        - **Error Message:** Invalid `audio_url`.\n            \n    - **Create Call - Unsupported File Format**\n        \n        - **Status Code:** 422 Unprocessable Entity\n            \n        - **Error Message:** Unsupported file format.\n            \n    - **Create Call - Missing Audio URL**\n        \n        - **Status Code:** 422 Unprocessable Entity\n            \n        - **Error Message:** `audio_url` is required.\n            \n2. **Get Call**\n    \n    - **Get Call - Default Case**\n        \n        - **Status Code:** 200 OK\n            \n        - **Response Structure:** Contains `id`, `name`, `location`, `emotional_tone`, `text`, and `categories`.\n            \n        - **Emotional Tone Validation:** Must be one of `Neutral`, `Positive`, `Negative`, `Angry`.\n            \n    - **Get Call - Processing Not Complete**\n        \n        - **Status Code:** 202 Accepted\n            \n        - **Response Message:** Indicates processing is not complete.\n            \n    - **Get Call - Non-existing Call ID**\n        \n        - **Status Code:** 404 Not Found\n            \n        - **Error Message:** Call not found.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "Get Categories - Default Case",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for a successful status code",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Validate that the response is an array",
+									"pm.test(\"Response is an array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"// Validate the structure of each category",
+									"pm.test(\"Each category has 'id', 'title', and 'points'\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    jsonData.forEach(category => {",
+									"        pm.expect(category).to.have.property('id');",
+									"        pm.expect(category).to.have.property('title');",
+									"        pm.expect(category).to.have.property('points');",
+									"        pm.expect(category.points).to.be.an('array');",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/category/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"category",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Category - Default Case",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Get the response JSON",
+									"let response = pm.response.json();",
+									"",
+									"// Check for a successful status code",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"// Validate the structure of the response",
+									"pm.test(\"Response should contain 'id', 'title', and 'points'\", function () {",
+									"    pm.expect(response).to.have.property(\"id\");",
+									"    pm.expect(response).to.have.property(\"title\");",
+									"    pm.expect(response).to.have.property(\"points\");",
+									"    pm.expect(response.title).to.eql(\"Topic Title\");",
+									"    pm.expect(response.points).to.eql([\"Key Point 1\", \"Key Point 2\"]);",
+									"});",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(response);",
+									"",
+									"pm.collectionVariables.set(\"category_id\", response.id);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"title\": \"Topic Title\", \"points\": [\"Key Point 1\", \"Key Point 2\"]}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/category/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"category",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Category - Invalid Request Body",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for Unprocessable Entity status code",
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"",
+									"// Validate error message",
+									"pm.test(\"Error message is present\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(pm.response.json());"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"title\": \"\", \"points\": \"Not an array\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/category/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"category",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Category - Missing Title",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for Unprocessable Entity status code",
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"",
+									"// Validate error message",
+									"pm.test(\"Error message is present\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});",
+									"",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(pm.response.json());"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"points\": [\"Key Point 1\", \"Key Point 2\"]}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/category/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"category",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Category - Points Not an Array",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for Unprocessable Entity status code",
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"",
+									"// Validate error message",
+									"pm.test(\"Error message is present\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});",
+									"",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(pm.response.json());"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"title\": \"Valid Title\", \"points\": \"Not an array\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/category/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"category",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Category - Default Case",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Get the response JSON",
+									"let response = pm.response.json();",
+									"",
+									"// Check for a successful status code",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Validate the structure of the response",
+									"pm.test(\"Response should contain 'id', 'title', and 'points'\", function () {",
+									"    pm.expect(response).to.have.property(\"id\");",
+									"    pm.expect(response).to.have.property(\"title\");",
+									"    pm.expect(response).to.have.property(\"points\");",
+									"    pm.expect(response.title).to.eql(\"New Topic Title\");",
+									"    pm.expect(response.points).to.eql([\"New Key Point 1\", \"New Key Point 2\"]);",
+									"});",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(response);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"title\": \"New Topic Title\", \"points\": [\"New Key Point 1\", \"New Key Point 2\"]}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/category/{{category_id}}/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"category",
+								"{{category_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Category - Invalid Request Body",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for Unprocessable Entity status code",
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"",
+									"// Validate error message",
+									"pm.test(\"Error message is present\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(pm.response.json());"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"title\": \"\", \"points\": \"Not an array\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/category/{{category_id}}/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"category",
+								"{{category_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Category - Non-existing Category ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for Not Found status code",
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"// Validate error message",
+									"pm.test(\"Error message indicates category not found\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include('No Category matches the given query.');",
+									"});",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(pm.response.json());"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"title\": \"New Topic Title\", \"points\": [\"New Key Point 1\", \"New Key Point 2\"]}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/category/942fd4c2-69e2-4fc6-aad6-50cd6c84332f/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"category",
+								"942fd4c2-69e2-4fc6-aad6-50cd6c84332f",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Category - Points Not an Array",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for Unprocessable Entity status code",
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"",
+									"// Validate error message",
+									"pm.test(\"Error message is present\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});",
+									"",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(pm.response.json());"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"points\": \"Not an array\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/category/{{category_id}}/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"category",
+								"{{category_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Category - Default Case",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for a successful status code",
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/category/{{category_id}}/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"category",
+								"{{category_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Category - Non-existing Category ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for Not Found status code",
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"// Validate error message",
+									"pm.test(\"Error message indicates category not found\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include('No Category matches the given query');",
+									"});",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(pm.response.json());"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/category/942fd4c2-69e2-4fc6-aad6-50cd6c84332f/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"category",
+								"942fd4c2-69e2-4fc6-aad6-50cd6c84332f",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Calls",
+			"item": [
+				{
+					"name": "Create Call - Default Case",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Get the response JSON",
+									"let response = pm.response.json();",
+									"",
+									"// Check for a successful status code",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"// Validate the structure of the response",
+									"pm.test(\"Response should contain 'id'\", function () {",
+									"    pm.expect(response).to.have.property(\"id\");",
+									"});",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(response);",
+									"",
+									"// Set the call ID for future requests",
+									"pm.collectionVariables.set(\"call_id\", response.id);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"audio_url\": \"http://localhost:8080/external-media/audio/transcription_to_analyse_0tCnsve.mp3\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/call/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"call",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Call - Invalid Audio URL",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for Unprocessable Entity status code",
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"",
+									"// Validate error message",
+									"pm.test(\"Error message indicates invalid URL\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include('Error while fetching the audio file');",
+									"});",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(pm.response.json());"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"audio_url\": \"invalid_url\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/call/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"call",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Call - Unsupported File Format",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for Unprocessable Entity status code",
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"",
+									"// Validate error message",
+									"pm.test(\"Error message indicates unsupported file format\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include('Invalid audio URL');",
+									"});",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(pm.response.json());"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"audio_url\": \"http://localhost:8080/external-media/audio/file.txt\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/call/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"call",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Call - Missing Audio URL",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for Unprocessable Entity status code",
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"",
+									"// Validate error message",
+									"pm.test(\"Error message indicates missing audio_url\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include('audio_url is required');",
+									"});",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(pm.response.json());"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/call/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"call",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Call - Default Case",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Get the response JSON",
+									"let response = pm.response.json();",
+									"",
+									"// Check for a successful status code",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Validate the structure of the response",
+									"pm.test(\"Response should contain required fields\", function () {",
+									"    pm.expect(response).to.have.property(\"id\");",
+									"    pm.expect(response).to.have.property(\"name\");",
+									"    pm.expect(response).to.have.property(\"location\");",
+									"    pm.expect(response).to.have.property(\"emotional_tone\");",
+									"    pm.expect(response).to.have.property(\"text\");",
+									"    pm.expect(response).to.have.property(\"categories\");",
+									"    pm.expect(response.categories).to.be.an('array');",
+									"    pm.expect(['neutral', 'positive', 'negative', 'angry']).to.include(response.emotional_tone);",
+									"});",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(response);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/call/{{call_id}}/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"call",
+								"{{call_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Call - Processing Not Complete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for Accepted status code",
+									"pm.test(\"Status code is 202\", function () {",
+									"    pm.response.to.have.status(202);",
+									"});",
+									"",
+									"// Validate response message",
+									"pm.test(\"Response indicates processing is not complete\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.eql('Transcription is not ready yet');",
+									"});",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(pm.response.json());"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/call/{{call_id}}/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"call",
+								"{{call_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Call - Non-existing Call ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Check for Not Found status code",
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"// Validate error message",
+									"pm.test(\"Error message indicates call not found\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include('No Call matches the given query.');",
+									"});",
+									"",
+									"// Log the response for debugging purposes",
+									"console.log(pm.response.json());"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/call/99/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"call",
+								"99",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "category_id",
+			"value": ""
+		},
+		{
+			"key": "call_id",
+			"value": ""
+		}
+	]
+}

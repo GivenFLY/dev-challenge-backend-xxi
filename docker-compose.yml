@@ -1,0 +1,140 @@
+services:
+  db:
+    image: postgres:13
+    container_name: "de78d953-92b3-4ffb-be3d-99333acadc30_devchallenge_21_db"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: dev_challenge_21
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  redis:
+    image: redis:alpine
+    container_name: "de78d953-92b3-4ffb-be3d-99333acadc30_devchallenge_21_redis"
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backend
+    container_name: "de78d953-92b3-4ffb-be3d-99333acadc30_devchallenge_21_backend"
+    command: >
+      sh -c "python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8080"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - audio_data:/shared/media
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - redis
+      - speech_to_text
+      - categorization
+    networks:
+      - app-network
+
+  backend_rq_worker:
+    build:
+      context: ./backend
+    container_name: "de78d953-92b3-4ffb-be3d-99333acadc30_devchallenge_21_backend_rq_worker"
+    env_file:
+      - ./backend/.env
+    command: python manage.py rqworker default
+    volumes:
+      - ./backend:/app
+      - audio_data:/shared/media
+    depends_on:
+      - db
+      - redis
+      - backend
+    networks:
+      - app-network
+
+  speech_to_text:
+    build:
+      context: ./speech_to_text_service
+      dockerfile: service.Dockerfile
+    container_name: "de78d953-92b3-4ffb-be3d-99333acadc30_devchallenge_21_speech_to_text"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=1
+    volumes:
+      - audio_data:/shared/media
+    ports:
+      - "8001:8000"
+    depends_on:
+      - redis
+      - speech_to_text_worker
+    networks:
+      - app-network
+
+  speech_to_text_worker:
+    build:
+      context: ./speech_to_text_service
+      dockerfile: worker.Dockerfile
+    container_name: "de78d953-92b3-4ffb-be3d-99333acadc30_devchallenge_21_speech_to_text_worker"
+    command: >
+      sh -c "python worker.py"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=1
+      - WORKER_MAX_JOBS=100
+      - WORKER_JOB_TIMEOUT=3600
+      - WORKER_MAX_TRIES=20
+    volumes:
+      - audio_data:/shared/media
+    networks:
+      - app-network
+
+  categorization:
+    build:
+      context: ./categorization_service
+      dockerfile: service.Dockerfile
+    container_name: "de78d953-92b3-4ffb-be3d-99333acadc30_devchallenge_21_categorization"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=2
+    volumes:
+      - audio_data:/shared/media
+    ports:
+      - "8002:8000"
+    depends_on:
+      - redis
+      - categorization_worker
+    networks:
+      - app-network
+
+  categorization_worker:
+    build:
+      context: ./categorization_service
+      dockerfile: worker.Dockerfile
+    container_name: "de78d953-92b3-4ffb-be3d-99333acadc30_devchallenge_21_categorization_worker"
+    command: >
+      sh -c "python worker.py"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=2
+    volumes:
+      - audio_data:/shared/media
+    networks:
+      - app-network
+
+volumes:
+  pgdata:
+  audio_data:
+
+networks:
+  app-network:
+    driver: bridge

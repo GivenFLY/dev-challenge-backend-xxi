@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "dev-challenge-speech_to_text_service"
+version = "0.1.0"
+description = ""
+authors = []
+readme = "README.md"
+package-mode=false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+requests = "^2.32.3"
+arq = "^0.26.1"
+python-multipart = "^0.0.10"
+
+[tool.poetry.group.service]
+optional = true
+
+[tool.poetry.group.service.dependencies]
+fastapi = "^0.115.0"
+uvicorn = "^0.30.6"
+
+[tool.poetry.group.worker]
+optional = true
+
+[tool.poetry.group.worker.dependencies]
+transformers = "^4.44.2"
+torchaudio = "^2.4.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

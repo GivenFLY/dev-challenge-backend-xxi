@@ -1,0 +1,4 @@
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=
+POSTGRES_DB=dev_challenge_backend
+POSTGRES_HOST=db
