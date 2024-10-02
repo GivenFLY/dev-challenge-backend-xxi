@@ -66,7 +66,7 @@ class CallCreateAPIView(generics.CreateAPIView):
         audio_content = result
         audio_content.seek(0)
         content_file = ContentFile(audio_content.read())
-        content_file.name = audio_url.split("/")[-1]
+        content_file.name = audio_url.split("/")[-1].split("?")[0]
 
         # Save the audio file to the model
         call = Call.objects.create(audio=content_file)
