@@ -21,7 +21,7 @@ class CallCreateAPIView(generics.CreateAPIView):
     queryset = Call.objects.all()
     serializer_class = CallCreateSerializer
     max_size = 300 * 1024 * 1024  # 300 MB in bytes
-    allowed_mime_types = ["audio/mpeg", "audio/wav"]  # MIME types for MP3 and WAV
+    allowed_mime_types = ["audio/mpeg", "audio/wav", "audio/mp3"]  # MIME types for MP3 and WAV
 
     def post(self, request, *args, **kwargs):
         audio_url = request.data.get("audio_url")
